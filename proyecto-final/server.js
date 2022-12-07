@@ -74,6 +74,14 @@ const productNotFound = (req, res, next) => {
     }
 }
 
+const cartNotFound = (req, res, next) => {
+    if(parseInt(req.params.id) > carts.length || parseInt(req.params.id) <= 0){
+        res.status(404).json({error: 'cart not found'})
+    } else{
+        next()
+    }
+}
+
 //RUTAS DE PRODUCTOS
 
 let products = [];
@@ -105,8 +113,8 @@ router.get(RUTA_PRODUCTOS, (req, res) => {
 router.put(RUTA_PRODUCTOS_ID, notAnAdmin, productNotFound, (req, res) => {
     const id = parseInt(req.params.id)
     const newData = req.body
-    const newProduct = products.map(p => p.id === id ? {...p, newData} : p)
-    res.json()
+    products = products.map(p => p.id === id ? {...p, ...newData} : p)
+    res.json({estado: 'producto actualizado con exito'})
 })
 
 //DELETE
@@ -118,7 +126,7 @@ router.delete(RUTA_PRODUCTOS, notAnAdmin, (req, res) => {
 
 router.delete(RUTA_PRODUCTOS_ID, notAnAdmin, productNotFound, (req, res) => {
     const id = parseInt(req.params.id);
-    const deleteProductFound = products.filter(p => p.id !== id);
+    let deleteProductFound = products.filter(p => p.id !== id);
     res.json(deleteProductFound)
 })
 
@@ -136,12 +144,12 @@ router.post(RUTA_CARRITO, (req, res) => {
         timestamp: timestamp,
         products: []
     };
-    writeFile(carts, 'carts.txt')
     carts.push(newCart)
+    writeFile(carts, 'carts.txt')
     res.send(`carrito agregado - id:${newId}`)
 })
 
-router.post('/carrito/:id/productos/:id_prod', productNotFound, (req, res) => {
+router.post('/carrito/:id/productos/:id_prod', cartNotFound, (req, res) => {
     const cartId = parseInt(req.params.id);
     const prodId = parseInt(req.params.id_prod);
     const productFound = products.find(prod => prod.id === prodId);
@@ -156,7 +164,13 @@ router.get(RUTA_CARRITO, (req, res) => {
     res.json(carts)
 })
 
-router.get('/carrito/:id/productos', productNotFound, (req, res) => {
+router.get(RUTA_CARRITO, cartNotFound, (req, res) => {
+    const id = parseInt(req.params.id);
+    const cartFound = carts.find(cart => cart.id === id);
+    res.json(cartFound)
+})
+
+router.get('/carrito/:id/productos', cartNotFound, (req, res) => {
     const id = parseInt(req.params.id);
     const cartFound = carts.find(cart => cart.id === id)
     res.json(cartFound.products)
@@ -164,7 +178,7 @@ router.get('/carrito/:id/productos', productNotFound, (req, res) => {
 
 //DELETE
 
-router.delete(RUTA_CARRITO_ID, productNotFound, (req, res) => {
+router.delete(RUTA_CARRITO_ID, cartNotFound, (req, res) => {
     const id = parseInt(req.params.id);
     const newCarts = carts.filter(cart => cart.id !== id);
     res.json({newCarts})
@@ -175,7 +189,7 @@ router.delete(RUTA_CARRITO, (req, res) => {
     res.json(carts)
 })
 
-router.delete('/carrito/:id/productos/:id_prod', productNotFound, (req, res) => {
+router.delete('/carrito/:id/productos/:id_prod', cartNotFound, (req, res) => {
     const cartId = parseInt(req.params.id);
     const prodId = parseInt(req.params.id_prod);
     const cartFound = carts.find(cart => cart.id === cartId);
