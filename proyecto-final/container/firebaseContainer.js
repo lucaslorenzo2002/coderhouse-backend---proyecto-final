@@ -107,18 +107,20 @@ class cartsFBCRUD{
 
     async postProdIntoCart(id, prodId){
         try {
+            const prod = this.queryP.doc(prodId);
             const doc = this.queryC.doc(id);
-            await doc.update();
+            await doc.update({products: [...products, {prod}]})
         } catch (error) {
             console.log(error)
         }
     }
 
-    async deleteProductsFromCart(){
+    async deleteProductsFromCart(id, prodId){
         try {
-            
+            const doc = this.queryC.doc(id);
+            await doc.delete(products.this.queryP.doc(prodId))
         } catch (error) {
-            
+            console.log(error);
         }
     }
 
